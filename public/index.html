@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CircuitVision AI — Snap it. Understand it. Build something amazing.</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ── HEADER ─────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">⚡</span>
+        <span class="brand-name">CircuitVision <span class="brand-ai">AI</span></span>
+      </div>
+      <nav class="main-nav">
+        <a href="#" class="nav-link active" data-page="home">Home</a>
+        <a href="#" class="nav-link" data-page="scanner">AI Scanner</a>
+        <a href="#" class="nav-link" data-page="projects">Projects</a>
+        <a href="#" class="nav-link" data-page="build-for-good">Build for Good</a>
+        <a href="#" class="nav-link" data-page="troubleshoot">Troubleshoot</a>
+        <a href="#" class="nav-link" data-page="workspace">Workspace</a>
+      </nav>
+      <div id="modeChip" class="mode-chip demo">⚡ Demo Mode</div>
+    </div>
+  </header>
+
+  <!-- ── MAIN ───────────────────────────────────────────────────── -->
+  <main id="appRoot">
+
+    <!-- PAGE: HOME -->
+    <section id="page-home" class="page active">
+      <div class="hero">
+        <div class="hero-text">
+          <h1>Snap it. Understand it.<br><span class="accent">Build something amazing.</span></h1>
+          <p class="hero-sub">Upload a photo of your Arduino components — CircuitVision AI identifies what you have and recommends projects you can build right now.</p>
+          <div class="hero-cta">
+            <button class="btn btn-primary" onclick="App.nav('scanner')">📷 Start Scanning</button>
+            <button class="btn btn-outline" onclick="App.nav('projects')">Browse Projects</button>
+          </div>
+        </div>
+        <div class="hero-graphic">
+          <div class="circuit-card">
+            <div class="circuit-icon">🔌</div>
+            <div class="circuit-label">Arduino UNO</div>
+          </div>
+          <div class="circuit-card">
+            <div class="circuit-icon">🌡️</div>
+            <div class="circuit-label">DHT11 Sensor</div>
+          </div>
+          <div class="circuit-card">
+            <div class="circuit-icon">📡</div>
+            <div class="circuit-label">HC-SR04</div>
+          </div>
+        </div>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card" onclick="App.nav('scanner')">
+          <div class="fc-icon">📷</div>
+          <h3>AI Hardware Scanner</h3>
+          <p>Upload a photo of your components. Our AI identifies them and builds your inventory instantly.</p>
+        </div>
+        <div class="feature-card" onclick="App.nav('projects')">
+          <div class="fc-icon">🚀</div>
+          <h3>Project Recommender</h3>
+          <p>Get ranked project suggestions based on what you already own, with missing parts clearly listed.</p>
+        </div>
+        <div class="feature-card" onclick="App.nav('projects')">
+          <div class="fc-icon">🔧</div>
+          <h3>Circuit Guides</h3>
+          <p>Step-by-step wiring tables, Arduino sketches with syntax highlighting, and assembly instructions.</p>
+        </div>
+        <div class="feature-card" onclick="App.nav('troubleshoot')">
+          <div class="fc-icon">🛠️</div>
+          <h3>Troubleshoot Assistant</h3>
+          <p>Describe your problem or paste your error. Get structured causes and step-by-step fixes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE: SCANNER -->
+    <section id="page-scanner" class="page">
+
+      <!-- Hidden file inputs — outside every clickable element -->
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" />
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" />
+
+      <div class="page-header">
+        <h2>AI Hardware Scanner</h2>
+        <p>Upload a photo of your components. The AI will identify them — or add them manually.</p>
+      </div>
+
+      <!-- Mode banner (shown by JS) -->
+      <div id="demoNotice" class="alert alert-info" style="display:none">
+        🟡 <strong>Demo Mode:</strong> No AI key configured. Click <strong>Analyse Image</strong> to load example components for demonstration.
+        Add <code>OPENAI_API_KEY</code> in <code>.env</code> to enable live AI detection.
+      </div>
+      <div id="liveNotice" class="alert alert-success" style="display:none">
+        🟢 <strong>Live AI Mode:</strong> GPT-4o Vision is active. Upload a real photo of your components for automatic detection.
+      </div>
+
+      <div class="scanner-layout">
+
+        <!-- LEFT: Upload area -->
+        <div class="upload-col">
+          <div class="upload-zone" id="dropZone">
+            <div class="upload-inner" id="uploadInner">
+              <div class="upload-icon">📷</div>
+              <p class="upload-title">Drag &amp; drop your components photo here</p>
+              <p class="upload-sub">JPEG, PNG, WebP · Max 5 MB</p>
+              <div class="upload-btns">
+                <button class="btn btn-primary" id="chooseFileBtn" type="button">📁 Choose File</button>
+                <button class="btn btn-outline" id="cameraBtn" type="button">📸 Use Camera</button>
+              </div>
+            </div>
+            <div id="imagePreview" class="image-preview" style="display:none">
+              <img id="previewImg" alt="Uploaded components" />
+              <div class="preview-actions">
+                <button class="btn btn-sm btn-primary" id="analyzeBtnInPreview" type="button" onclick="App.analyzeImage()">🔍 Analyse with AI</button>
+                <button class="btn btn-sm btn-outline" type="button" onclick="App.clearImage()">✕ Change Image</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI mode toggle -->
+          <div class="ai-mode-box" id="aiModeBox">
+            <div class="ai-mode-header">
+              <span id="aiModeIcon">🟡</span>
+              <strong id="aiModeLabel">Demo Mode</strong>
+              <span class="ai-mode-desc" id="aiModeDesc">Example components only</span>
+            </div>
+            <div class="ai-mode-switch-row">
+              <span class="label-sm">AI Provider:</span>
+              <span id="aiProviderLabel" class="ai-provider-badge demo">No key configured</span>
+            </div>
+            <p class="ai-mode-hint" id="aiModeHint">
+              To enable live detection, add <code>OPENAI_API_KEY=sk-...</code> to your <code>.env</code> file and restart the server.
+            </p>
+          </div>
+        </div>
+
+        <!-- RIGHT: Components panel -->
+        <div class="components-panel">
+          <div class="panel-header">
+            <h3>Component Inventory</h3>
+            <button class="btn btn-sm btn-danger" onclick="App.clearAllComponents()" id="clearAllBtn" style="display:none">🗑 Clear All</button>
+          </div>
+
+          <div id="analyzeStatus" class="analyze-status" style="display:none"></div>
+
+          <div id="componentChips" class="component-chips">
+            <p class="empty-state" id="chipsEmpty">Upload an image or use Quick Add below.</p>
+          </div>
+
+          <hr class="divider" />
+
+          <p class="label-sm" style="margin-bottom:.4rem">Add component manually:</p>
+          <div class="manual-add">
+            <input type="text" id="manualInput" placeholder="e.g. DHT11 Sensor" class="input" />
+            <button class="btn btn-outline btn-sm" onclick="App.addManualComponent()">+ Add</button>
+          </div>
+
+          <div class="common-components">
+            <p class="label-sm">Quick add:</p>
+            <div class="quick-chips">
+              <span class="qchip" onclick="App.quickAdd('Arduino UNO')">Arduino UNO</span>
+              <span class="qchip" onclick="App.quickAdd('HC-SR04 Ultrasonic')">HC-SR04</span>
+              <span class="qchip" onclick="App.quickAdd('DHT11 Sensor')">DHT11</span>
+              <span class="qchip" onclick="App.quickAdd('Soil Moisture Sensor')">Soil Sensor</span>
+              <span class="qchip" onclick="App.quickAdd('PIR Motion Sensor')">PIR Sensor</span>
+              <span class="qchip" onclick="App.quickAdd('LED')">LED</span>
+              <span class="qchip" onclick="App.quickAdd('Buzzer')">Buzzer</span>
+              <span class="qchip" onclick="App.quickAdd('Servo Motor')">Servo Motor</span>
+              <span class="qchip" onclick="App.quickAdd('Breadboard')">Breadboard</span>
+              <span class="qchip" onclick="App.quickAdd('Jumper Wires')">Jumper Wires</span>
+              <span class="qchip" onclick="App.quickAdd('220Ω Resistor')">220Ω Resistor</span>
+              <span class="qchip" onclick="App.quickAdd('16x2 LCD I2C')">LCD I2C</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="findProjectsBtn" onclick="App.findProjects()" style="margin-top:1rem" disabled>
+            🚀 Find Matching Projects
+          </button>
+        </div>
+      </div>
+
+      <!-- Full-width loading bar (shown during analysis) -->
+      <div id="scannerLoading" class="scanner-loading-bar" style="display:none">
+        <div class="scanner-loading-inner">
+          <div class="spinner"></div>
+          <div>
+            <strong id="scannerLoadingTitle">Analysing image…</strong>
+            <p id="scannerLoadingMsg" style="margin:0;font-size:.85rem;color:var(--muted)">Sending to AI vision model</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PAGE: PROJECTS -->
+    <section id="page-projects" class="page">
+      <div class="page-header">
+        <h2>Project Recommendations</h2>
+        <div class="filter-bar">
+          <select id="filterDifficulty" class="select" onchange="App.filterProjects()">
+            <option value="">All Difficulties</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+          </select>
+          <select id="filterCategory" class="select" onchange="App.filterProjects()">
+            <option value="">All Categories</option>
+            <option value="Smart City">Smart City</option>
+            <option value="Smart Agriculture">Smart Agriculture</option>
+            <option value="Water Conservation">Water Conservation</option>
+            <option value="Environmental Monitoring">Environmental Monitoring</option>
+            <option value="Smart Home">Smart Home</option>
+            <option value="Robotics">Robotics</option>
+          </select>
+          <button class="btn btn-sm btn-outline" onclick="App.loadAllProjects()">Show All</button>
+        </div>
+      </div>
+      <div id="projectsGrid" class="projects-grid">
+        <p class="empty-state">Use the AI Scanner to get personalised recommendations, or click "Show All".</p>
+      </div>
+    </section>
+
+    <!-- PAGE: PROJECT DETAIL -->
+    <section id="page-detail" class="page">
+      <button class="btn btn-sm btn-outline back-btn" onclick="App.nav('projects')">← Back to Projects</button>
+      <div id="projectDetail"></div>
+    </section>
+
+    <!-- PAGE: BUILD FOR GOOD -->
+    <section id="page-build-for-good" class="page">
+      <div class="page-header">
+        <h2>🌱 Build for Good</h2>
+        <p>These projects address real-world social and environmental challenges. Build technology that matters.</p>
+      </div>
+      <div id="bfgGrid" class="projects-grid"></div>
+    </section>
+
+    <!-- PAGE: TROUBLESHOOT -->
+    <section id="page-troubleshoot" class="page">
+      <div class="page-header">
+        <h2>🛠️ Troubleshooting Assistant</h2>
+        <p>Describe your problem or paste a compilation error. Get structured causes and step-by-step fixes.</p>
+      </div>
+      <div class="troubleshoot-layout">
+        <div class="trouble-input-area">
+          <textarea id="problemInput" class="textarea" rows="5"
+            placeholder="e.g. My LED is not lighting up even though I connected it to pin 8. Or paste your Arduino compile error here."></textarea>
+          <button class="btn btn-primary" onclick="App.troubleshoot()">🔍 Diagnose Problem</button>
+        </div>
+        <div id="troubleshootResult" class="trouble-result" style="display:none"></div>
+      </div>
+      <div id="troubleshootLoading" class="loading-overlay" style="display:none">
+        <div class="spinner"></div><p>Diagnosing…</p>
+      </div>
+    </section>
+
+    <!-- PAGE: WORKSPACE -->
+    <section id="page-workspace" class="page">
+      <div class="page-header">
+        <h2>📋 My Workspace</h2>
+        <p>Track your build progress. Your checklist is saved locally in the browser.</p>
+      </div>
+      <div id="workspaceContent">
+        <p class="empty-state">Open a project and click "Add to Workspace" to start tracking your build.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>CircuitVision AI · Built for the IBM Bob Hackathon · <span id="year"></span></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

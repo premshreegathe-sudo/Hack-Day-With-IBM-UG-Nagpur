@@ -1,0 +1,491 @@
+[
+  {
+    "id": "smart-parking-assistant",
+    "title": "Smart Parking Assistant",
+    "tagline": "Detect available parking spots and alert drivers with LEDs and a buzzer.",
+    "difficulty": "Beginner",
+    "estimatedTime": "2–3 hours",
+    "category": "Smart City",
+    "socialImpact": true,
+    "socialImpactCategory": "Smart City",
+    "additionalCostINR": 350,
+    "overview": "Build a miniature smart parking system that uses ultrasonic sensors to detect whether a parking bay is occupied. An LED matrix (green/red LEDs) shows availability, and a buzzer alerts when the last slot fills. Ideal for learning distance sensing and conditional logic.",
+    "realWorldProblem": "Urban parking congestion wastes fuel and time. Smart parking systems reduce this by directing drivers to open bays instantly.",
+    "coreComponents": [
+      "Arduino UNO",
+      "HC-SR04 Ultrasonic Sensor",
+      "LED",
+      "Buzzer",
+      "Breadboard",
+      "Jumper Wires",
+      "220Ω Resistor"
+    ],
+    "additionalComponents": [],
+    "bom": [
+      { "item": "Arduino UNO", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "HC-SR04 Ultrasonic Sensor", "qty": 2, "approxCostINR": 120, "notes": "One per parking bay" },
+      { "item": "Green LED", "qty": 2, "approxCostINR": 10, "notes": "Available = green" },
+      { "item": "Red LED", "qty": 2, "approxCostINR": 10, "notes": "Occupied = red" },
+      { "item": "Active Buzzer", "qty": 1, "approxCostINR": 20, "notes": "Alert on full" },
+      { "item": "220Ω Resistor", "qty": 4, "approxCostINR": 10, "notes": "One per LED" },
+      { "item": "Breadboard", "qty": 1, "approxCostINR": 80, "notes": "Full size" },
+      { "item": "Jumper Wires", "qty": 20, "approxCostINR": 50, "notes": "M-to-M" }
+    ],
+    "wiringTable": [
+      { "component": "HC-SR04 #1 VCC", "arduinoPin": "5V" },
+      { "component": "HC-SR04 #1 GND", "arduinoPin": "GND" },
+      { "component": "HC-SR04 #1 TRIG", "arduinoPin": "D2" },
+      { "component": "HC-SR04 #1 ECHO", "arduinoPin": "D3" },
+      { "component": "HC-SR04 #2 VCC", "arduinoPin": "5V" },
+      { "component": "HC-SR04 #2 GND", "arduinoPin": "GND" },
+      { "component": "HC-SR04 #2 TRIG", "arduinoPin": "D4" },
+      { "component": "HC-SR04 #2 ECHO", "arduinoPin": "D5" },
+      { "component": "Green LED #1 Anode (via 220Ω)", "arduinoPin": "D6" },
+      { "component": "Red LED #1 Anode (via 220Ω)", "arduinoPin": "D7" },
+      { "component": "Green LED #2 Anode (via 220Ω)", "arduinoPin": "D8" },
+      { "component": "Red LED #2 Anode (via 220Ω)", "arduinoPin": "D9" },
+      { "component": "Buzzer +", "arduinoPin": "D10" },
+      { "component": "All LED Cathodes + Buzzer −", "arduinoPin": "GND" }
+    ],
+    "assemblySteps": [
+      "Place the breadboard on a flat surface.",
+      "Insert both HC-SR04 sensors at opposite ends of the breadboard.",
+      "Connect each sensor: VCC→5V, GND→GND, TRIG and ECHO to assigned Arduino digital pins.",
+      "Insert four LEDs (green and red pairs) with 220Ω resistors in series.",
+      "Connect all LED cathodes to GND rail.",
+      "Insert the active buzzer with + to D10 and − to GND.",
+      "Double-check all VCC and GND connections before powering on.",
+      "Upload the sketch and open Serial Monitor at 9600 baud to verify distances."
+    ],
+    "code": "// Smart Parking Assistant\n// Uses 2 HC-SR04 sensors to detect slot occupancy\n\nconst int TRIG1 = 2, ECHO1 = 3;\nconst int TRIG2 = 4, ECHO2 = 5;\nconst int GREEN1 = 6, RED1 = 7;\nconst int GREEN2 = 8, RED2 = 9;\nconst int BUZZER = 10;\nconst int OCCUPIED_CM = 10; // distance threshold in cm\n\nlong readDistance(int trig, int echo) {\n  digitalWrite(trig, LOW);\n  delayMicroseconds(2);\n  digitalWrite(trig, HIGH);\n  delayMicroseconds(10);\n  digitalWrite(trig, LOW);\n  long duration = pulseIn(echo, HIGH, 30000);\n  return duration * 0.034 / 2;\n}\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(TRIG1, OUTPUT); pinMode(ECHO1, INPUT);\n  pinMode(TRIG2, OUTPUT); pinMode(ECHO2, INPUT);\n  int leds[] = {GREEN1, RED1, GREEN2, RED2, BUZZER};\n  for (int i = 0; i < 5; i++) pinMode(leds[i], OUTPUT);\n}\n\nvoid loop() {\n  long d1 = readDistance(TRIG1, ECHO1);\n  long d2 = readDistance(TRIG2, ECHO2);\n  bool slot1 = (d1 > 0 && d1 < OCCUPIED_CM);\n  bool slot2 = (d2 > 0 && d2 < OCCUPIED_CM);\n\n  digitalWrite(RED1,   slot1 ? HIGH : LOW);\n  digitalWrite(GREEN1, slot1 ? LOW  : HIGH);\n  digitalWrite(RED2,   slot2 ? HIGH : LOW);\n  digitalWrite(GREEN2, slot2 ? LOW  : HIGH);\n  digitalWrite(BUZZER, (slot1 && slot2) ? HIGH : LOW);\n\n  Serial.print(\"Slot1: \"); Serial.print(d1); Serial.print(\"cm \");\n  Serial.print(\"Slot2: \"); Serial.println(d2);\n  delay(500);\n}",
+    "libraries": [],
+    "uploadInstructions": "1. Open Arduino IDE. 2. Paste the sketch. 3. Select Tools > Board > Arduino UNO. 4. Select the correct COM port. 5. Click Upload (→). 6. Open Serial Monitor at 9600 baud.",
+    "expectedBehavior": "Green LEDs light when a bay is free; red LEDs light when occupied. The buzzer activates when both bays are occupied. Serial Monitor shows real-time distances.",
+    "troubleshooting": [
+      { "problem": "Distance always reads 0", "fix": "Check TRIG/ECHO wiring. Ensure pulseIn timeout is long enough (30000 µs)." },
+      { "problem": "LED stays on all the time", "fix": "Check resistor is in series, not in parallel. Verify pin assignments match the sketch." },
+      { "problem": "Buzzer is silent", "fix": "Confirm it is an active buzzer. Check polarity." }
+    ],
+    "safetyNotes": "Keep sensor voltage at 5V. Do not short-circuit the buzzer. Ensure resistors are fitted before LEDs."
+  },
+
+  {
+    "id": "soil-moisture-monitor",
+    "title": "Soil Moisture Monitoring System",
+    "tagline": "Monitor plant soil moisture and trigger an LED/buzzer alert when watering is needed.",
+    "difficulty": "Beginner",
+    "estimatedTime": "1–2 hours",
+    "category": "Smart Agriculture",
+    "socialImpact": true,
+    "socialImpactCategory": "Smart Agriculture",
+    "additionalCostINR": 180,
+    "overview": "A soil moisture sensor reads analog values from the soil. When moisture falls below a threshold the Arduino activates a red LED and buzzer to prompt watering. A green LED confirms adequate moisture. Ideal first project for agricultural IoT.",
+    "realWorldProblem": "Over-watering and under-watering are the leading causes of crop loss for small farmers. Automated soil monitoring conserves water and improves yield.",
+    "coreComponents": [
+      "Arduino UNO",
+      "Soil Moisture Sensor",
+      "LED",
+      "Buzzer",
+      "Breadboard",
+      "Jumper Wires"
+    ],
+    "additionalComponents": [],
+    "bom": [
+      { "item": "Arduino UNO", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Soil Moisture Sensor Module (FC-28)", "qty": 1, "approxCostINR": 80, "notes": "Includes comparator board" },
+      { "item": "Red LED", "qty": 1, "approxCostINR": 5, "notes": "Dry alert" },
+      { "item": "Green LED", "qty": 1, "approxCostINR": 5, "notes": "Moisture OK" },
+      { "item": "Active Buzzer", "qty": 1, "approxCostINR": 20, "notes": "Dry alert" },
+      { "item": "220Ω Resistor", "qty": 2, "approxCostINR": 5, "notes": "One per LED" },
+      { "item": "Breadboard", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Jumper Wires", "qty": 10, "approxCostINR": 30, "notes": "M-to-M" }
+    ],
+    "wiringTable": [
+      { "component": "Moisture Sensor VCC", "arduinoPin": "5V" },
+      { "component": "Moisture Sensor GND", "arduinoPin": "GND" },
+      { "component": "Moisture Sensor AOUT", "arduinoPin": "A0" },
+      { "component": "Red LED Anode (via 220Ω)", "arduinoPin": "D8" },
+      { "component": "Green LED Anode (via 220Ω)", "arduinoPin": "D9" },
+      { "component": "Buzzer +", "arduinoPin": "D10" },
+      { "component": "All Cathodes / GND", "arduinoPin": "GND" }
+    ],
+    "assemblySteps": [
+      "Insert the soil moisture sensor probe into the breadboard.",
+      "Connect VCC to 5V, GND to GND, and AOUT to A0.",
+      "Insert red LED with 220Ω resistor to D8.",
+      "Insert green LED with 220Ω resistor to D9.",
+      "Connect buzzer + to D10 and − to GND.",
+      "Upload the sketch and insert the probe into dry soil.",
+      "Gradually add water and observe the threshold change in Serial Monitor."
+    ],
+    "code": "// Soil Moisture Monitor\n// Alerts when soil is too dry\n\nconst int SENSOR_PIN = A0;\nconst int RED_LED = 8;\nconst int GREEN_LED = 9;\nconst int BUZZER = 10;\nconst int DRY_THRESHOLD = 600; // Adjust 0–1023 based on your sensor\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(RED_LED, OUTPUT);\n  pinMode(GREEN_LED, OUTPUT);\n  pinMode(BUZZER, OUTPUT);\n}\n\nvoid loop() {\n  int moisture = analogRead(SENSOR_PIN);\n  Serial.print(\"Moisture: \");\n  Serial.println(moisture);\n\n  if (moisture > DRY_THRESHOLD) {\n    // Soil is dry\n    digitalWrite(RED_LED, HIGH);\n    digitalWrite(GREEN_LED, LOW);\n    digitalWrite(BUZZER, HIGH);\n    delay(200);\n    digitalWrite(BUZZER, LOW);\n    delay(800);\n  } else {\n    // Moisture OK\n    digitalWrite(RED_LED, LOW);\n    digitalWrite(GREEN_LED, HIGH);\n    digitalWrite(BUZZER, LOW);\n  }\n  delay(1000);\n}",
+    "libraries": [],
+    "uploadInstructions": "1. Open Arduino IDE. 2. Paste the sketch. 3. Select Board > Arduino UNO. 4. Upload. 5. Open Serial Monitor at 9600 baud to read moisture values.",
+    "expectedBehavior": "Green LED on when soil has adequate moisture. Red LED and buzzer pulse when soil is dry. Adjust DRY_THRESHOLD constant to calibrate for your soil type.",
+    "troubleshooting": [
+      { "problem": "Value always reads 0 or 1023", "fix": "Check AOUT is connected to A0, not a digital pin. Ensure sensor is properly inserted in soil." },
+      { "problem": "LED never changes", "fix": "Adjust DRY_THRESHOLD — dry soil typically reads 600–900 on a 5V Arduino." }
+    ],
+    "safetyNotes": "Do not submerge the sensor module PCB in water — only the stainless steel probes. Dry the probes after use to extend life."
+  },
+
+  {
+    "id": "water-tank-level-alert",
+    "title": "Water Tank Level Alert",
+    "tagline": "Monitor water tank levels with ultrasonic sensing and LED indicators.",
+    "difficulty": "Beginner",
+    "estimatedTime": "2 hours",
+    "category": "Water Conservation",
+    "socialImpact": true,
+    "socialImpactCategory": "Water Conservation",
+    "additionalCostINR": 250,
+    "overview": "An HC-SR04 ultrasonic sensor mounted inside a water tank measures the distance to the water surface, allowing the Arduino to calculate fill percentage. Three LEDs (green/yellow/red) and a buzzer indicate full, half, and low levels.",
+    "realWorldProblem": "Overflowing tanks waste water and cause structural damage. Manual monitoring is impractical for rooftop tanks. An automated alert system conserves water and prevents overflow.",
+    "coreComponents": [
+      "Arduino UNO",
+      "HC-SR04 Ultrasonic Sensor",
+      "LED",
+      "Buzzer",
+      "Breadboard",
+      "Jumper Wires",
+      "220Ω Resistor"
+    ],
+    "additionalComponents": [],
+    "bom": [
+      { "item": "Arduino UNO", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "HC-SR04 Ultrasonic Sensor", "qty": 1, "approxCostINR": 60, "notes": "" },
+      { "item": "Green LED", "qty": 1, "approxCostINR": 5, "notes": "Full level" },
+      { "item": "Yellow LED", "qty": 1, "approxCostINR": 5, "notes": "Medium level" },
+      { "item": "Red LED", "qty": 1, "approxCostINR": 5, "notes": "Low level" },
+      { "item": "Active Buzzer", "qty": 1, "approxCostINR": 20, "notes": "Low-level alert" },
+      { "item": "220Ω Resistor", "qty": 3, "approxCostINR": 10, "notes": "One per LED" },
+      { "item": "Breadboard", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Jumper Wires", "qty": 15, "approxCostINR": 40, "notes": "" }
+    ],
+    "wiringTable": [
+      { "component": "HC-SR04 VCC", "arduinoPin": "5V" },
+      { "component": "HC-SR04 GND", "arduinoPin": "GND" },
+      { "component": "HC-SR04 TRIG", "arduinoPin": "D9" },
+      { "component": "HC-SR04 ECHO", "arduinoPin": "D10" },
+      { "component": "Green LED Anode (via 220Ω)", "arduinoPin": "D4" },
+      { "component": "Yellow LED Anode (via 220Ω)", "arduinoPin": "D5" },
+      { "component": "Red LED Anode (via 220Ω)", "arduinoPin": "D6" },
+      { "component": "Buzzer +", "arduinoPin": "D7" },
+      { "component": "All Cathodes / GND", "arduinoPin": "GND" }
+    ],
+    "assemblySteps": [
+      "Mount sensor facing downward at the top inside of a container (representing the tank).",
+      "Measure the total tank height in cm — update TANK_HEIGHT in the sketch.",
+      "Wire sensor VCC/GND/TRIG/ECHO as in the wiring table.",
+      "Insert LEDs with resistors and buzzer as specified.",
+      "Upload sketch and pour water to test each threshold.",
+      "Open Serial Monitor at 9600 baud to read raw distance and fill percentage."
+    ],
+    "code": "// Water Tank Level Alert\n\nconst int TRIG = 9, ECHO = 10;\nconst int LED_GREEN = 4, LED_YELLOW = 5, LED_RED = 6, BUZZER = 7;\nconst float TANK_HEIGHT = 30.0; // cm — measure your actual tank\n\nlong getDistance() {\n  digitalWrite(TRIG, LOW); delayMicroseconds(2);\n  digitalWrite(TRIG, HIGH); delayMicroseconds(10);\n  digitalWrite(TRIG, LOW);\n  long dur = pulseIn(ECHO, HIGH, 30000);\n  return dur * 0.034 / 2;\n}\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);\n  int pins[] = {LED_GREEN, LED_YELLOW, LED_RED, BUZZER};\n  for (int i = 0; i < 4; i++) pinMode(pins[i], OUTPUT);\n}\n\nvoid loop() {\n  long dist = getDistance();\n  if (dist == 0) { delay(500); return; } // sensor error\n  float filled = ((TANK_HEIGHT - dist) / TANK_HEIGHT) * 100.0;\n  filled = constrain(filled, 0, 100);\n\n  Serial.print(\"Level: \"); Serial.print(filled); Serial.println(\"%\");\n\n  digitalWrite(LED_GREEN,  filled >= 66 ? HIGH : LOW);\n  digitalWrite(LED_YELLOW, (filled >= 33 && filled < 66) ? HIGH : LOW);\n  digitalWrite(LED_RED,    filled < 33 ? HIGH : LOW);\n  digitalWrite(BUZZER,     filled < 15 ? HIGH : LOW);\n  delay(1000);\n}",
+    "libraries": [],
+    "uploadInstructions": "Upload via Arduino IDE. Set TANK_HEIGHT to your container's inner height in cm. Open Serial Monitor at 9600 baud.",
+    "expectedBehavior": "Green LED for > 66% full. Yellow LED for 33–66%. Red LED and buzzer for < 33%. Buzzer triggers as low-level alert below 15%.",
+    "troubleshooting": [
+      { "problem": "Level shows 0% always", "fix": "Check TRIG/ECHO pins. Sensor must face straight down and be within 4m range." },
+      { "problem": "Percentage exceeds 100%", "fix": "Update TANK_HEIGHT to accurately reflect your container's inner height." }
+    ],
+    "safetyNotes": "Keep the sensor PCB clear of water contact. Only the sound-emitting face should be near moisture. Use waterproof JST connectors for permanent installations."
+  },
+
+  {
+    "id": "temperature-humidity-monitor",
+    "title": "Temperature and Humidity Monitor",
+    "tagline": "Display real-time temperature and humidity on an LCD or Serial Monitor.",
+    "difficulty": "Beginner",
+    "estimatedTime": "1–2 hours",
+    "category": "Environmental Monitoring",
+    "socialImpact": true,
+    "socialImpactCategory": "Environmental Monitoring",
+    "additionalCostINR": 220,
+    "overview": "A DHT11 sensor reads ambient temperature and humidity, displaying values on a 16×2 I2C LCD. A warning LED activates at high temperatures. Great for greenhouse monitoring, weather stations, or server room alerts.",
+    "realWorldProblem": "Unmonitored temperature in server rooms, greenhouses, and storage facilities causes equipment failure and crop loss. A low-cost sensor provides early warning.",
+    "coreComponents": [
+      "Arduino UNO",
+      "DHT11 Sensor",
+      "LED",
+      "Breadboard",
+      "Jumper Wires"
+    ],
+    "additionalComponents": ["16x2 LCD I2C Module"],
+    "bom": [
+      { "item": "Arduino UNO", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "DHT11 Temperature & Humidity Sensor", "qty": 1, "approxCostINR": 80, "notes": "3-pin module version preferred" },
+      { "item": "16×2 I2C LCD Module", "qty": 1, "approxCostINR": 120, "notes": "I2C reduces wiring to 4 wires" },
+      { "item": "Red LED", "qty": 1, "approxCostINR": 5, "notes": "High-temp warning" },
+      { "item": "220Ω Resistor", "qty": 1, "approxCostINR": 3, "notes": "For LED" },
+      { "item": "Breadboard", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Jumper Wires", "qty": 10, "approxCostINR": 30, "notes": "" }
+    ],
+    "wiringTable": [
+      { "component": "DHT11 VCC", "arduinoPin": "5V" },
+      { "component": "DHT11 GND", "arduinoPin": "GND" },
+      { "component": "DHT11 DATA", "arduinoPin": "D2" },
+      { "component": "I2C LCD VCC", "arduinoPin": "5V" },
+      { "component": "I2C LCD GND", "arduinoPin": "GND" },
+      { "component": "I2C LCD SDA", "arduinoPin": "A4" },
+      { "component": "I2C LCD SCL", "arduinoPin": "A5" },
+      { "component": "Red LED Anode (via 220Ω)", "arduinoPin": "D8" },
+      { "component": "Red LED Cathode", "arduinoPin": "GND" }
+    ],
+    "assemblySteps": [
+      "Insert DHT11 module into breadboard. Connect VCC, GND, DATA.",
+      "Connect I2C LCD: SDA to A4, SCL to A5, VCC to 5V, GND to GND.",
+      "Insert red LED with 220Ω resistor to D8.",
+      "Install DHT library: Sketch > Include Library > Manage Libraries > search 'DHT sensor library' by Adafruit > Install.",
+      "Install LiquidCrystal_I2C library: search 'LiquidCrystal I2C' by Frank de Brabander > Install.",
+      "Upload the sketch and observe values on the LCD."
+    ],
+    "code": "// Temperature & Humidity Monitor with I2C LCD\n#include <DHT.h>\n#include <LiquidCrystal_I2C.h>\n\n#define DHTPIN 2\n#define DHTTYPE DHT11\nDHT dht(DHTPIN, DHTTYPE);\nLiquidCrystal_I2C lcd(0x27, 16, 2); // try 0x3F if 0x27 doesn't work\n\nconst int WARN_LED = 8;\nconst float HIGH_TEMP = 35.0; // °C warning threshold\n\nvoid setup() {\n  Serial.begin(9600);\n  dht.begin();\n  lcd.init();\n  lcd.backlight();\n  pinMode(WARN_LED, OUTPUT);\n  lcd.print(\"CircuitVision\");\n  lcd.setCursor(0, 1);\n  lcd.print(\"Starting...\");\n  delay(2000);\n}\n\nvoid loop() {\n  float humidity = dht.readHumidity();\n  float temperature = dht.readTemperature();\n\n  if (isnan(humidity) || isnan(temperature)) {\n    lcd.clear();\n    lcd.print(\"Sensor Error\");\n    Serial.println(\"DHT read failed\");\n    delay(2000);\n    return;\n  }\n\n  lcd.clear();\n  lcd.setCursor(0, 0);\n  lcd.print(\"Temp: \"); lcd.print(temperature, 1); lcd.print((char)223); lcd.print(\"C\");\n  lcd.setCursor(0, 1);\n  lcd.print(\"Humi: \"); lcd.print(humidity, 1); lcd.print(\"%\");\n\n  Serial.print(\"T: \"); Serial.print(temperature);\n  Serial.print(\" H: \"); Serial.println(humidity);\n\n  digitalWrite(WARN_LED, temperature >= HIGH_TEMP ? HIGH : LOW);\n  delay(2000);\n}",
+    "libraries": ["DHT sensor library (Adafruit)", "LiquidCrystal_I2C (Frank de Brabander)"],
+    "uploadInstructions": "Install both libraries from Library Manager. Upload the sketch. If the LCD shows nothing, run an I2C scanner sketch to find the correct address (0x27 or 0x3F).",
+    "expectedBehavior": "LCD shows live temperature in °C and humidity in %. Red LED activates above 35°C threshold. Values update every 2 seconds.",
+    "troubleshooting": [
+      { "problem": "LCD blank", "fix": "Adjust the contrast potentiometer on the I2C backpack. Verify I2C address — run I2C scanner sketch." },
+      { "problem": "DHT reads NaN", "fix": "Ensure DATA pin wiring is correct. Add a 10kΩ pull-up resistor between DATA and VCC if using bare DHT11 (not module)." }
+    ],
+    "safetyNotes": "DHT11 operates at 3.3–5V. Do not expose to condensing humidity above 95%."
+  },
+
+  {
+    "id": "touchless-smart-dustbin",
+    "title": "Touchless Smart Dustbin",
+    "tagline": "Open a dustbin lid automatically when a hand is detected nearby.",
+    "difficulty": "Intermediate",
+    "estimatedTime": "2–3 hours",
+    "category": "Smart Home / Hygiene",
+    "socialImpact": true,
+    "socialImpactCategory": "Public Health",
+    "additionalCostINR": 450,
+    "overview": "A servo motor opens a dustbin lid when an HC-SR04 detects a hand within 15 cm. The lid closes automatically after 3 seconds. Promotes hygiene by eliminating touch contact with waste bins.",
+    "realWorldProblem": "Touching waste bin lids is a major vector for germ spread in homes, hospitals, and public spaces. A touchless mechanism eliminates this contact.",
+    "coreComponents": [
+      "Arduino UNO",
+      "HC-SR04 Ultrasonic Sensor",
+      "Servo Motor",
+      "Breadboard",
+      "Jumper Wires"
+    ],
+    "additionalComponents": [],
+    "bom": [
+      { "item": "Arduino UNO", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "HC-SR04 Ultrasonic Sensor", "qty": 1, "approxCostINR": 60, "notes": "" },
+      { "item": "SG90 Micro Servo Motor", "qty": 1, "approxCostINR": 120, "notes": "Attach to lid with bracket" },
+      { "item": "Breadboard", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Jumper Wires", "qty": 10, "approxCostINR": 30, "notes": "" },
+      { "item": "Small Plastic Box", "qty": 1, "approxCostINR": 50, "notes": "Prototype bin" }
+    ],
+    "wiringTable": [
+      { "component": "HC-SR04 VCC", "arduinoPin": "5V" },
+      { "component": "HC-SR04 GND", "arduinoPin": "GND" },
+      { "component": "HC-SR04 TRIG", "arduinoPin": "D2" },
+      { "component": "HC-SR04 ECHO", "arduinoPin": "D3" },
+      { "component": "Servo Signal (Orange/Yellow)", "arduinoPin": "D9 (PWM)" },
+      { "component": "Servo VCC (Red)", "arduinoPin": "5V" },
+      { "component": "Servo GND (Brown/Black)", "arduinoPin": "GND" }
+    ],
+    "assemblySteps": [
+      "Attach the servo to the bin lid with a small bracket or hot glue.",
+      "Position the HC-SR04 sensor on the front face of the bin pointing outward.",
+      "Wire both components as per the wiring table.",
+      "Upload the sketch and test with hand detection.",
+      "Adjust OPEN_DISTANCE and LID_DELAY constants as needed.",
+      "Servo angle (0°=closed, 90°=open) can be calibrated in the sketch."
+    ],
+    "code": "// Touchless Smart Dustbin\n#include <Servo.h>\n\nconst int TRIG = 2, ECHO = 3;\nconst int SERVO_PIN = 9;\nconst int OPEN_DISTANCE = 15; // cm — hand detection range\nconst int LID_DELAY = 3000;   // ms — how long lid stays open\n\nServo lidServo;\n\nlong getDistance() {\n  digitalWrite(TRIG, LOW); delayMicroseconds(2);\n  digitalWrite(TRIG, HIGH); delayMicroseconds(10);\n  digitalWrite(TRIG, LOW);\n  long dur = pulseIn(ECHO, HIGH, 30000);\n  return dur * 0.034 / 2;\n}\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);\n  lidServo.attach(SERVO_PIN);\n  lidServo.write(0); // closed\n  delay(500);\n}\n\nvoid loop() {\n  long dist = getDistance();\n  Serial.print(\"Distance: \"); Serial.println(dist);\n\n  if (dist > 0 && dist < OPEN_DISTANCE) {\n    lidServo.write(90); // open\n    delay(LID_DELAY);\n    lidServo.write(0);  // close\n    delay(500);\n  }\n  delay(100);\n}",
+    "libraries": ["Servo (built-in with Arduino IDE)"],
+    "uploadInstructions": "The Servo library is built into Arduino IDE. Upload the sketch directly. Calibrate servo angles 0 and 90 to fit your lid geometry.",
+    "expectedBehavior": "Lid opens to 90° when hand detected within 15 cm. Closes after 3 seconds. Serial Monitor shows real-time distance readings.",
+    "troubleshooting": [
+      { "problem": "Servo jitters", "fix": "Add a 100µF capacitor across servo VCC and GND. Use an external 5V supply for the servo if the Arduino power is insufficient." },
+      { "problem": "Lid opens too slow/fast", "fix": "Adjust delay between servo angle increments for smooth movement." }
+    ],
+    "safetyNotes": "SG90 servo draws up to 250mA. Ensure the Arduino USB power supply can handle the load; use a 1A+ adapter."
+  },
+
+  {
+    "id": "obstacle-detection-alert",
+    "title": "Obstacle Detection Alert",
+    "tagline": "Detect objects ahead and warn with a buzzer — foundation for robot collision avoidance.",
+    "difficulty": "Beginner",
+    "estimatedTime": "1 hour",
+    "category": "Robotics / Safety",
+    "socialImpact": false,
+    "socialImpactCategory": null,
+    "additionalCostINR": 150,
+    "overview": "Uses an HC-SR04 ultrasonic sensor to detect objects within a set range and activates a buzzer and red LED alert. The buzzer beeps faster as the object gets closer. This is the foundational module for robot obstacle avoidance.",
+    "realWorldProblem": "Collision avoidance is critical for autonomous vehicles, assistive robots for the visually impaired, and warehouse automation.",
+    "coreComponents": [
+      "Arduino UNO",
+      "HC-SR04 Ultrasonic Sensor",
+      "Buzzer",
+      "LED",
+      "Breadboard",
+      "Jumper Wires",
+      "220Ω Resistor"
+    ],
+    "additionalComponents": [],
+    "bom": [
+      { "item": "Arduino UNO", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "HC-SR04 Ultrasonic Sensor", "qty": 1, "approxCostINR": 60, "notes": "" },
+      { "item": "Active Buzzer", "qty": 1, "approxCostINR": 20, "notes": "" },
+      { "item": "Red LED", "qty": 1, "approxCostINR": 5, "notes": "" },
+      { "item": "220Ω Resistor", "qty": 1, "approxCostINR": 3, "notes": "For LED" },
+      { "item": "Breadboard", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Jumper Wires", "qty": 8, "approxCostINR": 20, "notes": "" }
+    ],
+    "wiringTable": [
+      { "component": "HC-SR04 VCC", "arduinoPin": "5V" },
+      { "component": "HC-SR04 GND", "arduinoPin": "GND" },
+      { "component": "HC-SR04 TRIG", "arduinoPin": "D9" },
+      { "component": "HC-SR04 ECHO", "arduinoPin": "D10" },
+      { "component": "Buzzer +", "arduinoPin": "D7" },
+      { "component": "Red LED Anode (via 220Ω)", "arduinoPin": "D8" },
+      { "component": "Buzzer − / LED Cathode", "arduinoPin": "GND" }
+    ],
+    "assemblySteps": [
+      "Connect HC-SR04 as per wiring table.",
+      "Connect buzzer + to D7 and − to GND.",
+      "Connect red LED anode via 220Ω resistor to D8 and cathode to GND.",
+      "Upload the sketch.",
+      "Hold your hand in front of the sensor at varying distances to test."
+    ],
+    "code": "// Obstacle Detection Alert\n// Buzzer beeps faster as object approaches\n\nconst int TRIG = 9, ECHO = 10;\nconst int BUZZER = 7, LED = 8;\nconst int ALERT_DIST = 30; // cm\n\nlong getDistance() {\n  digitalWrite(TRIG, LOW); delayMicroseconds(2);\n  digitalWrite(TRIG, HIGH); delayMicroseconds(10);\n  digitalWrite(TRIG, LOW);\n  long dur = pulseIn(ECHO, HIGH, 30000);\n  return dur * 0.034 / 2;\n}\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);\n  pinMode(BUZZER, OUTPUT); pinMode(LED, OUTPUT);\n}\n\nvoid loop() {\n  long dist = getDistance();\n  Serial.print(\"Dist: \"); Serial.println(dist);\n\n  if (dist > 0 && dist < ALERT_DIST) {\n    digitalWrite(LED, HIGH);\n    // Beep interval shortens as object gets closer\n    int beepDelay = map(dist, 1, ALERT_DIST, 50, 500);\n    digitalWrite(BUZZER, HIGH);\n    delay(100);\n    digitalWrite(BUZZER, LOW);\n    delay(beepDelay);\n  } else {\n    digitalWrite(LED, LOW);\n    digitalWrite(BUZZER, LOW);\n    delay(200);\n  }\n}",
+    "libraries": [],
+    "uploadInstructions": "No libraries needed. Upload directly. Adjust ALERT_DIST constant for your use case.",
+    "expectedBehavior": "Red LED lights and buzzer beeps when obstacle within 30 cm. Beep frequency increases as distance decreases. Serial Monitor shows distance readings.",
+    "troubleshooting": [
+      { "problem": "Buzzer beeps continuously", "fix": "Object may be permanently in range. Increase ALERT_DIST or check for reflective surfaces near the sensor." }
+    ],
+    "safetyNotes": "HC-SR04 operates at 5V. Do not exceed 15mA through the LED — ensure resistor is fitted."
+  },
+
+  {
+    "id": "smart-plant-care-monitor",
+    "title": "Smart Plant Care Monitor",
+    "tagline": "Monitor soil moisture, light, and temperature to keep your plant healthy.",
+    "difficulty": "Intermediate",
+    "estimatedTime": "3–4 hours",
+    "category": "Smart Agriculture",
+    "socialImpact": true,
+    "socialImpactCategory": "Smart Agriculture",
+    "additionalCostINR": 380,
+    "overview": "Combines a soil moisture sensor, LDR (light sensor), and DHT11 temperature sensor to give a complete plant health dashboard on the Serial Monitor. LED indicators show which condition needs attention. Ideal for urban gardening.",
+    "realWorldProblem": "Urban dwellers often struggle to keep plants alive due to inconsistent care. An automated care monitor reminds users when to water, provides more light, or adjust temperature.",
+    "coreComponents": [
+      "Arduino UNO",
+      "Soil Moisture Sensor",
+      "DHT11 Sensor",
+      "LED",
+      "Breadboard",
+      "Jumper Wires"
+    ],
+    "additionalComponents": ["LDR (Photoresistor)", "10kΩ Resistor"],
+    "bom": [
+      { "item": "Arduino UNO", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Soil Moisture Sensor (FC-28)", "qty": 1, "approxCostINR": 80, "notes": "" },
+      { "item": "DHT11 Sensor", "qty": 1, "approxCostINR": 80, "notes": "" },
+      { "item": "LDR (Photoresistor)", "qty": 1, "approxCostINR": 10, "notes": "Light level sensor" },
+      { "item": "10kΩ Resistor", "qty": 1, "approxCostINR": 3, "notes": "Voltage divider for LDR" },
+      { "item": "220Ω Resistor", "qty": 3, "approxCostINR": 8, "notes": "For LEDs" },
+      { "item": "Red LED", "qty": 1, "approxCostINR": 5, "notes": "Low moisture" },
+      { "item": "Blue LED", "qty": 1, "approxCostINR": 5, "notes": "Low light" },
+      { "item": "Yellow LED", "qty": 1, "approxCostINR": 5, "notes": "High temperature" },
+      { "item": "Breadboard", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Jumper Wires", "qty": 15, "approxCostINR": 40, "notes": "" }
+    ],
+    "wiringTable": [
+      { "component": "Soil Sensor VCC", "arduinoPin": "5V" },
+      { "component": "Soil Sensor GND", "arduinoPin": "GND" },
+      { "component": "Soil Sensor AOUT", "arduinoPin": "A0" },
+      { "component": "LDR one leg", "arduinoPin": "5V" },
+      { "component": "LDR other leg + 10kΩ to GND", "arduinoPin": "A1 (junction)" },
+      { "component": "DHT11 VCC", "arduinoPin": "5V" },
+      { "component": "DHT11 GND", "arduinoPin": "GND" },
+      { "component": "DHT11 DATA", "arduinoPin": "D2" },
+      { "component": "Red LED Anode (via 220Ω)", "arduinoPin": "D5" },
+      { "component": "Blue LED Anode (via 220Ω)", "arduinoPin": "D6" },
+      { "component": "Yellow LED Anode (via 220Ω)", "arduinoPin": "D7" },
+      { "component": "All LED Cathodes", "arduinoPin": "GND" }
+    ],
+    "assemblySteps": [
+      "Insert soil moisture sensor probes and connect to A0.",
+      "Build LDR voltage divider: LDR from 5V to A1 node, 10kΩ from A1 node to GND.",
+      "Connect DHT11 DATA to D2.",
+      "Insert three LEDs with 220Ω resistors to D5, D6, D7.",
+      "Install DHT library from Arduino Library Manager.",
+      "Upload the sketch.",
+      "Place probes in soil, LDR facing light source, and observe LED indicators."
+    ],
+    "code": "// Smart Plant Care Monitor\n#include <DHT.h>\n\n#define DHTPIN 2\n#define DHTTYPE DHT11\nDHT dht(DHTPIN, DHTTYPE);\n\nconst int SOIL_PIN = A0;\nconst int LDR_PIN  = A1;\nconst int LED_MOISTURE = 5; // Red\nconst int LED_LIGHT    = 6; // Blue\nconst int LED_TEMP     = 7; // Yellow\n\nconst int DRY_THRESHOLD   = 600;\nconst int DARK_THRESHOLD  = 300;\nconst float HOT_THRESHOLD = 35.0;\n\nvoid setup() {\n  Serial.begin(9600);\n  dht.begin();\n  pinMode(LED_MOISTURE, OUTPUT);\n  pinMode(LED_LIGHT, OUTPUT);\n  pinMode(LED_TEMP, OUTPUT);\n}\n\nvoid loop() {\n  int soilVal  = analogRead(SOIL_PIN);\n  int lightVal = analogRead(LDR_PIN);\n  float temp   = dht.readTemperature();\n  float humi   = dht.readHumidity();\n\n  bool needsWater = soilVal > DRY_THRESHOLD;\n  bool needsLight = lightVal < DARK_THRESHOLD;\n  bool tooHot     = !isnan(temp) && temp > HOT_THRESHOLD;\n\n  digitalWrite(LED_MOISTURE, needsWater ? HIGH : LOW);\n  digitalWrite(LED_LIGHT,    needsLight ? HIGH : LOW);\n  digitalWrite(LED_TEMP,     tooHot     ? HIGH : LOW);\n\n  Serial.print(\"Soil: \");  Serial.print(soilVal);\n  Serial.print(\" Light: \"); Serial.print(lightVal);\n  Serial.print(\" Temp: \");  Serial.print(temp);\n  Serial.print(\"°C Humi: \"); Serial.print(humi);\n  Serial.println(\"%\");\n\n  delay(2000);\n}",
+    "libraries": ["DHT sensor library (Adafruit)"],
+    "uploadInstructions": "Install DHT library. Upload sketch. Open Serial Monitor at 9600 baud for all readings.",
+    "expectedBehavior": "Red LED = needs water. Blue LED = needs more light. Yellow LED = temperature too high. All LEDs off = plant is healthy.",
+    "troubleshooting": [
+      { "problem": "DHT reads NaN", "fix": "Check DATA wiring and library installation." },
+      { "problem": "LDR never triggers", "fix": "Adjust DARK_THRESHOLD — a bright indoor environment reads 600–900; DARK_THRESHOLD of 300 may be too low." }
+    ],
+    "safetyNotes": "Do not submerge the sensor module PCB. Keep electrical connections away from the soil and water."
+  },
+
+  {
+    "id": "water-usage-monitor",
+    "title": "Water Usage Monitoring Prototype",
+    "tagline": "Measure simulated water flow and display cumulative usage to promote conservation.",
+    "difficulty": "Intermediate",
+    "estimatedTime": "2–3 hours",
+    "category": "Water Conservation",
+    "socialImpact": true,
+    "socialImpactCategory": "Water Conservation",
+    "additionalCostINR": 420,
+    "overview": "A YF-S201 water flow sensor sends pulses proportional to flow rate. The Arduino counts pulses to calculate litres consumed and displays the total on a 16×2 I2C LCD. A threshold alert triggers a buzzer when a daily limit is exceeded.",
+    "realWorldProblem": "Households in water-scarce regions often have no visibility into daily water consumption. Simple metering raises awareness and drives conservation behaviour.",
+    "coreComponents": [
+      "Arduino UNO",
+      "Buzzer",
+      "Breadboard",
+      "Jumper Wires"
+    ],
+    "additionalComponents": ["YF-S201 Water Flow Sensor", "16x2 LCD I2C Module"],
+    "bom": [
+      { "item": "Arduino UNO", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "YF-S201 Water Flow Sensor", "qty": 1, "approxCostINR": 180, "notes": "Hall-effect pulse sensor" },
+      { "item": "16×2 I2C LCD Module", "qty": 1, "approxCostINR": 120, "notes": "" },
+      { "item": "Active Buzzer", "qty": 1, "approxCostINR": 20, "notes": "Usage limit alert" },
+      { "item": "Breadboard", "qty": 1, "approxCostINR": 0, "notes": "Already owned" },
+      { "item": "Jumper Wires", "qty": 10, "approxCostINR": 30, "notes": "" }
+    ],
+    "wiringTable": [
+      { "component": "YF-S201 Red Wire (VCC)", "arduinoPin": "5V" },
+      { "component": "YF-S201 Black Wire (GND)", "arduinoPin": "GND" },
+      { "component": "YF-S201 Yellow Wire (Signal)", "arduinoPin": "D2 (INT0)" },
+      { "component": "I2C LCD VCC", "arduinoPin": "5V" },
+      { "component": "I2C LCD GND", "arduinoPin": "GND" },
+      { "component": "I2C LCD SDA", "arduinoPin": "A4" },
+      { "component": "I2C LCD SCL", "arduinoPin": "A5" },
+      { "component": "Buzzer +", "arduinoPin": "D8" },
+      { "component": "Buzzer −", "arduinoPin": "GND" }
+    ],
+    "assemblySteps": [
+      "Connect YF-S201 sensor to the water pipe using fittings (for prototype, simulate pulses by briefly connecting D2 to 5V through 1kΩ resistor).",
+      "Wire I2C LCD as specified.",
+      "Connect buzzer to D8.",
+      "Install LiquidCrystal_I2C library.",
+      "Upload the sketch.",
+      "Open Serial Monitor at 9600 baud to verify pulse counts."
+    ],
+    "code": "// Water Usage Monitoring Prototype\n#include <LiquidCrystal_I2C.h>\n\nLiquidCrystal_I2C lcd(0x27, 16, 2);\n\nconst int FLOW_PIN = 2;\nconst int BUZZER = 8;\nconst float CALIBRATION = 7.5;   // pulses per litre for YF-S201\nconst float DAILY_LIMIT_L = 50.0;\n\nvolatile int pulseCount = 0;\nfloat totalLitres = 0.0;\nunsigned long lastCalc = 0;\n\nvoid IRAM_ATTR countPulse() {\n  pulseCount++;\n}\n\nvoid setup() {\n  Serial.begin(9600);\n  lcd.init(); lcd.backlight();\n  pinMode(FLOW_PIN, INPUT_PULLUP);\n  attachInterrupt(digitalPinToInterrupt(FLOW_PIN), countPulse, FALLING);\n  pinMode(BUZZER, OUTPUT);\n  lcd.print(\"Water Monitor\");\n  delay(2000);\n}\n\nvoid loop() {\n  if (millis() - lastCalc >= 1000) {\n    lastCalc = millis();\n    noInterrupts();\n    int pulseCopy = pulseCount;\n    pulseCount = 0;\n    interrupts();\n\n    float flowRate = (pulseCopy / CALIBRATION); // L/min\n    totalLitres += flowRate / 60.0;             // L per second\n\n    lcd.clear();\n    lcd.setCursor(0, 0);\n    lcd.print(\"Flow: \"); lcd.print(flowRate, 1); lcd.print(\" L/m\");\n    lcd.setCursor(0, 1);\n    lcd.print(\"Total: \"); lcd.print(totalLitres, 2); lcd.print(\"L\");\n\n    Serial.print(\"Flow: \"); Serial.print(flowRate);\n    Serial.print(\" L/min  Total: \"); Serial.println(totalLitres);\n\n    digitalWrite(BUZZER, totalLitres >= DAILY_LIMIT_L ? HIGH : LOW);\n  }\n}",
+    "libraries": ["LiquidCrystal_I2C (Frank de Brabander)"],
+    "uploadInstructions": "Install LiquidCrystal_I2C. For prototype testing without plumbing, briefly pulse D2 with a wire connected to 5V through a 1kΩ resistor. Upload the sketch and observe counts.",
+    "expectedBehavior": "LCD shows current flow rate in L/min and cumulative total. Buzzer activates when total exceeds DAILY_LIMIT_L (50L default). Reset Arduino to clear total.",
+    "troubleshooting": [
+      { "problem": "Flow rate always 0", "fix": "Ensure D2 is used (interrupt pin on UNO). Check FALLING/RISING edge for your sensor." },
+      { "problem": "LCD I2C address wrong", "fix": "Run an I2C scanner to find the correct address (0x27 or 0x3F)." }
+    ],
+    "safetyNotes": "YF-S201 is rated for water only — not for chemicals. Ensure all electrical connections are kept away from water flow path. Use waterproof connectors for permanent installation."
+  }
+]
